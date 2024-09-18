@@ -29,3 +29,6 @@ class Movie(models.Model):
   poster = models.CharField(max_length=200)
   country = models.CharField(max_length=20)
   language = models.CharField(max_length=20)
+
+  def __str__(self):
+    return self.title
