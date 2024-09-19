@@ -1,8 +1,7 @@
 from rest_framework import viewsets
-from .serializers import ActorSerializer, GenreSerializer, MovieSerializer, UserSerializer
-from rest_framework.permissions import AllowAny
-from .models import Actor, Genre, Movie
-from django.contrib.auth.models import User
+from .serializers import ActorSerializer, GenreSerializer, MovieSerializer, CustomUserSerializer
+from rest_framework.permissions import AllowAny, IsAdminUser
+from .models import Actor, Genre, Movie, CustomUser
 from django.shortcuts import HttpResponse 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
@@ -11,7 +10,6 @@ from .serializers import MyTokenObtainPairSerializer
 # MyTokenObtainPairView
 class MyTokenObtainPairView(TokenObtainPairView):
    serializer_class = MyTokenObtainPairSerializer  
-
 
 
 # Create your views here.
@@ -33,10 +31,18 @@ class GenreViewSet(viewsets.ModelViewSet):
   permission_classes = [AllowAny]
 
 
+# CustomUser viewSet
 class UserViewSet(viewsets.ModelViewSet):
-  queryset = User.objects.all()
-  serializer_class = UserSerializer
-  permission_classes = [AllowAny]
+  queryset = CustomUser.objects.all()
+  serializer_class = CustomUserSerializer
+  permission_classes = (IsAdminUser,)
+
+
+
+# class UserViewSet(viewsets.ModelViewSet):
+#   queryset = User.objects.all()
+#   serializer_class = UserSerializer
+#   permission_classes = [AllowAny]
 
 
 # def movieTestView(request):
