@@ -5,6 +5,11 @@ from .models import Actor, Genre, Movie, CustomUser
 from django.shortcuts import HttpResponse 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
+from rest_framework.views import APIView
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.response import Response
+
+
 
 
 # MyTokenObtainPairView
@@ -51,6 +56,19 @@ class UserViewSet(viewsets.ModelViewSet):
 #   for actor in actors:
 #     print(actor.id)
 #   return HttpResponse('Hi there')
+
+
+# Current user
+class UserView(APIView):
+    def get(self, request): 
+        if not request.user.id:
+            raise AuthenticationFailed('Unauthenticated :(')
+        
+        user = CustomUser.objects.filter(id=request.user.id).first()
+
+        serializer = CustomUserSerializer(user)
+
+        return Response(serializer.data)
   
 
 
