@@ -20,15 +20,14 @@ class Genre(models.Model):
     return self.name
   
 
-
 class Movie(models.Model):
   title = models.CharField(max_length=50)
   year = models.IntegerField()
   genre = models.ManyToManyField(Genre)
   rating = models.DecimalField(max_digits=4, decimal_places=2)
   director = models.CharField(max_length=50)
-  actors = models.ManyToManyField(Actor)
-  poster = models.CharField(max_length=200)
+  actors = models.ManyToManyField(Actor, related_name='movies')
+  poster = models.ImageField(upload_to='images/posters/', blank=True, default='images/posters/default.jpeg')
   country = models.CharField(max_length=20)
   language = models.CharField(max_length=20)
 
@@ -37,5 +36,8 @@ class Movie(models.Model):
   
 
 class CustomUser(AbstractUser):
-  avatar = models.ImageField(upload_to='images/', blank=True)
-  bookmarked = models.ManyToManyField(Movie, blank=True)
+  avatar = models.ImageField(upload_to='images/users/', blank=True, default='images/users/default.png')
+  bookmarked = models.ManyToManyField(Movie, related_name="movie", blank=True, default=False)
+
+  def __str__(self):
+    return self.username

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Actor, Genre, Movie, CustomUser
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.password_validation import validate_password
 
 
 # My tokenObtain serializer
@@ -17,37 +18,110 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     
 
 class ActorSerializer(serializers.ModelSerializer):
+  # movies = MovieSerializer(many=True)
   class Meta:
     model = Actor
-    fields = '__all__'
+    fields = ('firstname', 'lastname', )    
+
 
 
 class GenreSerializer(serializers.ModelSerializer):
   class Meta:
     model = Genre
-    fields = '__all__'
+    fields = ('name', )
 
     
 class MovieSerializer(serializers.ModelSerializer):
+
+  # !!! Important part (How to read and write m2m fields) !!!
+  actors = ActorSerializer(read_only=True, many=True)
+  actors_id = serializers.PrimaryKeyRelatedField(queryset=Actor.objects.all(), source='actors', many=True, write_only=True) # Include fields
+  genre = GenreSerializer(read_only=True, many=True)
+  genre_id = serializers.PrimaryKeyRelatedField(queryset=Genre.objects.all(), source='genre', many=True, write_only=True) # Include fields
+
+# No need any more
+  # def create(self, validated_data):
+
+  #   # First, remove following from the validated_data dict...
+  #   actors_data = validated_data.pop('actors', None)
+  #   genre_data = validated_data.pop('genre', None)
+
+  #   print(actors_data, genre_data)
+
+  #   # Set the admin_notes custom value...
+  #   # validated_data['admin_notes'] = 'Test'
+
+  #   # Create the object instance...
+  #   movie = Movie.objects.create(**validated_data)
+
+  #   # Finally, add your many-to-many relationships...
+  #   actors = []
+  #   genres = []
+  #   if actors_data:
+  #       for data1 in actors_data:
+  #           a = Actor.objects.filter(id=data1.id).first()
+  #           print(a)
+  #           actors.append(a.id)
+  #           # movie.actors.set(Actor.objects.get(id=data1.id))
+
+  #   if genre_data:
+  #       for data2 in genre_data:
+  #           g = Genre.objects.filter(id=data2.id).first()
+  #           genres.append(g.id)
+  #           # movie.genre.set(Genre.objects.get(id=data2.id))
+  #   movie.genre.set(genres)       
+  #   movie.actors.set(actors)  
+
+  #   return movie
+
   class Meta:
     model = Movie
-    fields = '__all__'
+    # fields = "__all__"
+    fields = ('id', 'title', 
+'year',
+'genre',
+'rating',
+'director',
+'actors',
+'actors_id',
+'genre_id',
+'poster',
+'country',
+'language',)
 
-
-# class UserSerializer(serializers.ModelSerializer):
-#   class Meta:
-#     model = User
-#     fields = '__all__'
 
 
 # CustomUser serializer
 class CustomUserSerializer(serializers.ModelSerializer):
+  bookmarked = MovieSerializer(read_only=True, many=True)
+
   class Meta:
     model = CustomUser
     fields = ['id', 'username', 'password', 'avatar', 'bookmarked']
     extra_kwargs = {
       'password': {'write_only': True}
     }
+
+# Add m2m field (option for serializer)
+  # def create(self, validated_data):
+  #   password = validated_data.pop('password', None)
+  #   # instance = self.Meta.model(**validated_data)
+  #   if self.initial_data['bookmarked']:
+  #     movies = self.initial_data['bookmarked']
+
+  #   moviesInstances = []
+  #   if movies:
+  #     for movie in movies:
+  #       moviesInstances.append(Movie.objects.get(pk = movie))
+  #     user = CustomUser.objects.create(**validated_data)  
+    
+
+  #   if password is not None:
+  #     user.set_password(password)
+  #     if movies:
+  #       user.bookmarked.set(moviesInstances)
+  #     user.save()
+  #   return user
 
   def create(self, validated_data):
     password = validated_data.pop('password', None)
@@ -56,3 +130,35 @@ class CustomUserSerializer(serializers.ModelSerializer):
       instance.set_password(password)
     instance.save()
     return instance
+  
+
+
+# Change password
+class ChangePasswordSerializer(serializers.Serializer):
+  """
+  Serializer for password change endpoint.
+  """
+  old_password = serializers.CharField(required=True)
+  new_password = serializers.CharField(required=True)
+
+  def validate_new_password(self, value):
+      validate_password(value)
+      return value
+  
+
+# Update user's bookmarked movies
+class UpdateBookmarksSerializer(serializers.ModelSerializer):
+  bookmarked = MovieSerializer(read_only=True, many=True)
+
+  class Meta:
+    model = CustomUser 
+    fields = ['bookmarked', ]
+
+
+# Update user's avatar image
+class UpdateAvatarSerializer(serializers.ModelSerializer):
+  avatar = serializers.ImageField(required=False)
+
+  class Meta:
+    model = CustomUser 
+    fields = ['avatar', ]

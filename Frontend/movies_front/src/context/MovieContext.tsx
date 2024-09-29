@@ -17,9 +17,22 @@ interface UserType {
   username: string;
 }
 
+interface MovieType {
+  actors: number[];
+  country: string;
+  director: string;
+  genre: number[];
+  id: number;
+  language: string;
+  poster: string;
+  rating: string;
+  title: string;
+  year: number;
+}
+
 interface PersonalTypes {
   avatar: null | string;
-  bookmarked: string[] | [];
+  bookmarked: MovieType[] | [];
   id: number;
   username: string;
 }
@@ -150,6 +163,25 @@ export const MovieProvider = ({ children }: ChildrenType) => {
     }
   };
 
+  // Get movies
+  let getMovies = async () => {
+    let response = await fetch("http://127.0.0.1:8000/api/movies", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    let data = await response.json();
+
+    if (response.status == 200) {
+      console.log(data);
+    } else {
+      alert("Something went wrong!");
+    }
+  };
+
   let contextData = {
     loginUser,
     user,
@@ -172,8 +204,15 @@ export const MovieProvider = ({ children }: ChildrenType) => {
   }, [user]);
 
   useEffect(() => {
-    if (authTokens?.access) getUserInfo(authTokens?.access);
+    // Get user info after login
+    if (authTokens) getUserInfo(authTokens?.access);
   }, [authTokens]);
+
+  useEffect(() => {
+    // Get user info after refresh, if logged in
+    if (token) getUserInfo(token);
+    getMovies();
+  }, []);
 
   return (
     <MovieContext.Provider value={contextData}>
