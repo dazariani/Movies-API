@@ -23,7 +23,7 @@ class UserModelLevelPermission(permissions.BasePermission):
   
 
 # Movie permissions
-class MovieObjectLevelPermission(permissions.BasePermission):
+class ObjectLevelPermission(permissions.BasePermission):
   def has_object_permission(self, request, view, obj):
     print("From movie object level")
 
@@ -34,7 +34,7 @@ class MovieObjectLevelPermission(permissions.BasePermission):
     return False 
     
 
-class MovieModelLevelPermission(permissions.BasePermission):
+class ModelLevelPermission(permissions.BasePermission):
   print("From movie model level")
 
   def has_permission(self, request, view):

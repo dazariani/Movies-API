@@ -2,6 +2,8 @@ import { createContext, useState, useEffect, FormEvent } from "react";
 import React from "react";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
+import { SetURLSearchParams, useSearchParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 // TS types
 interface ChildrenType {
@@ -17,11 +19,15 @@ interface UserType {
   username: string;
 }
 
-interface MovieType {
+interface GenreType {
+  name: string;
+}
+
+export interface MovieType {
   actors: number[];
   country: string;
   director: string;
-  genre: number[];
+  genre: GenreType[];
   id: number;
   language: string;
   poster: string;
@@ -31,10 +37,11 @@ interface MovieType {
 }
 
 interface PersonalTypes {
-  avatar: null | string;
+  avatar: string;
   bookmarked: MovieType[] | [];
   id: number;
   username: string;
+  password: string;
 }
 
 interface AuthtokensType {
@@ -42,25 +49,49 @@ interface AuthtokensType {
   refresh: string;
 }
 
+interface movieListType {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: MovieType[];
+}
+
 interface contextDataTypes {
   loginUser?: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   user: UserType | null;
   logoutUser: () => void;
   personalInfo: PersonalTypes | null;
+  movieList: movieListType | null;
+  setMovieList: (prop: movieListType | null) => void;
+  setPersonalInfo: (props: PersonalTypes) => void;
+  authTokens: AuthtokensType | null;
+  token: string | undefined;
+  getUserInfo: (tkn: string) => Promise<void>;
+  getMovies: (url: string) => Promise<void>;
+  loading: boolean;
+  searchParams: URLSearchParams;
+  setSearchParams: SetURLSearchParams;
+  setLoading: (props: boolean) => void;
 }
 
 // Context
-const MovieContext = createContext<contextDataTypes | null>(null);
+const MovieContext = createContext<contextDataTypes>({} as contextDataTypes);
 
 export default MovieContext;
 
 let token = Cookies.get("accessToken");
+let tokenRefresh = Cookies.get("refreshToken");
 const accessToken: UserType | null = token ? jwtDecode(token) : null;
 
 export const MovieProvider = ({ children }: ChildrenType) => {
   const [user, setUser] = useState<UserType | null>(accessToken);
   const [authTokens, setAuthTokens] = useState<AuthtokensType | null>(null);
   const [personalInfo, setPersonalInfo] = useState<PersonalTypes | null>(null);
+  const [movieList, setMovieList] = useState<movieListType | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  let location = useLocation();
+
+  const [searchParams, setSearchParams] = useSearchParams({ page: "1" });
 
   //  Update token
   const updateToken = async () => {
@@ -141,6 +172,7 @@ export const MovieProvider = ({ children }: ChildrenType) => {
     Cookies.remove("refreshToken");
     setUser(null);
     setAuthTokens(null);
+    setPersonalInfo(null);
   };
 
   // Get user's personal info
@@ -158,14 +190,16 @@ export const MovieProvider = ({ children }: ChildrenType) => {
 
     if (response.status == 200) {
       setPersonalInfo(data);
+      console.log("user info set");
     } else {
       alert("Something went wrong!");
     }
   };
 
   // Get movies
-  let getMovies = async () => {
-    let response = await fetch("http://127.0.0.1:8000/api/movies", {
+  let getMovies = async (url: string) => {
+    // setLoading(true);
+    let response = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -176,7 +210,9 @@ export const MovieProvider = ({ children }: ChildrenType) => {
     let data = await response.json();
 
     if (response.status == 200) {
-      console.log(data);
+      setMovieList(data);
+      console.log("movies set");
+      setLoading(false);
     } else {
       alert("Something went wrong!");
     }
@@ -187,6 +223,17 @@ export const MovieProvider = ({ children }: ChildrenType) => {
     user,
     logoutUser,
     personalInfo,
+    setPersonalInfo,
+    movieList,
+    authTokens,
+    token,
+    getUserInfo,
+    getMovies,
+    loading,
+    searchParams,
+    setSearchParams,
+    setMovieList,
+    setLoading,
   };
 
   // Refresh token
@@ -194,7 +241,6 @@ export const MovieProvider = ({ children }: ChildrenType) => {
   useEffect(() => {
     if (user) {
       const interval = setInterval(() => {
-        console.log("Token updated!");
         updateToken();
       }, refreshInterval);
 
@@ -211,7 +257,28 @@ export const MovieProvider = ({ children }: ChildrenType) => {
   useEffect(() => {
     // Get user info after refresh, if logged in
     if (token) getUserInfo(token);
-    getMovies();
+
+    // Fatch movies going back to home page
+    if (location.pathname == "/" && searchParams.get("page") == null) {
+      getMovies("http://127.0.0.1:8000/api/movies/?page=1");
+    }
+    let access = Cookies.get("accessToken");
+    let refresh = Cookies.get("refreshToken");
+    if (access && refresh) {
+      setAuthTokens({
+        access,
+        refresh,
+      });
+    }
+  }, [location.pathname, searchParams.get("page")]);
+
+  // First time movie fatch
+  useEffect(() => {
+    if (tokenRefresh) updateToken();
+
+    getMovies(
+      "http://127.0.0.1:8000/api/movies/?page=" + searchParams.get("page")
+    );
   }, []);
 
   return (

@@ -6,20 +6,30 @@ import MovieContext from "../context/MovieContext";
 import { Link } from "react-router-dom";
 
 function Header() {
-  let user = useContext(MovieContext)?.user;
+  let { user, personalInfo } = useContext(MovieContext);
 
   return (
     <Wrapper>
       <Container>
-        <LogoNavBox>
+        <Link to="/">
           <Logo src={logo} />
-          {user && (
-            <p>
-              Hello <Link to="/personal">{user.username}</Link>
-            </p>
-          )}
+        </Link>
+        <GreetingNavBox>
           <Navigation />
-        </LogoNavBox>
+          {personalInfo && (
+            <>
+              <Hello>
+                Hello, <Link to="/personal">{personalInfo.username}</Link>
+              </Hello>
+              <Link to="/personal">
+                <Avatar
+                  src={"http://127.0.0.1:8000" + personalInfo?.avatar}
+                  alt="avatar"
+                />
+              </Link>
+            </>
+          )}
+        </GreetingNavBox>
       </Container>
     </Wrapper>
   );
@@ -28,15 +38,39 @@ function Header() {
 export default Header;
 
 const Wrapper = styled.div``;
-const Container = styled.div``;
-const LogoNavBox = styled.div`
+const Container = styled.div`
   display: flex;
+  justify-content: space-between;
+  padding-inline: 20px;
+  padding-block: 20px;
+  background: rgb(18 30 38);
+
+  & > a {
+    height: 80px;
+  }
+`;
+const GreetingNavBox = styled.div`
+  height: 40px;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  color: aliceblue;
+  gap: 40px;
 `;
 const Logo = styled.img`
   width: 80px;
+  border-radius: 50%;
 `;
-const Username = styled.span`
-  font-size: 20px;
-  color: blueviolet;
-  text-transform: capitalize;
+const Hello = styled.p`
+  & > a {
+    text-decoration: none;
+    color: rgb(153, 195, 255);
+    text-transform: capitalize;
+    margin-left: 4px;
+  }
+`;
+const Avatar = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
 `;

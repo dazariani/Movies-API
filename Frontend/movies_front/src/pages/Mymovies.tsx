@@ -1,7 +1,13 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import MoviesGrid from "../components/MoviesGrid";
 
 function Mymovies() {
-  return <div>Mymovies</div>;
+  return (
+    <div>
+      <MoviesGrid />
+    </div>
+  );
 }
 
 export default Mymovies;

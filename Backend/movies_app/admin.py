@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Movie, Actor, Genre, CustomUser
+from .models import Movie, Actor, Genre, CustomUser, Director
 
 # Register your models here.
 class CustomUserAdmin(UserAdmin):
@@ -31,4 +31,5 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(Movie)
 admin.site.register(Actor)
 admin.site.register(Genre)
+admin.site.register(Director)
 admin.site.register(CustomUser, CustomUserAdmin)

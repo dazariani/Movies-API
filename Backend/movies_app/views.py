@@ -1,8 +1,8 @@
 from http.client import NOT_FOUND
 from rest_framework import viewsets, status, mixins
-from .serializers import ActorSerializer, GenreSerializer, MovieSerializer, CustomUserSerializer, ChangePasswordSerializer, UpdateBookmarksSerializer, UpdateAvatarSerializer
+from .serializers import ActorSerializer, GenreSerializer, MovieSerializer, CustomUserSerializer, ChangePasswordSerializer, UpdateBookmarksSerializer, UpdateAvatarSerializer, DirectorSerializer, UpdatePosterSerializer
 from rest_framework.permissions import AllowAny, IsAdminUser
-from .models import Actor, Genre, Movie, CustomUser
+from .models import Actor, Genre, Movie, CustomUser, Director
 from django.shortcuts import HttpResponse, get_object_or_404
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
@@ -10,10 +10,9 @@ from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
-from .permissions import UserModelLevelPermission, UserObjLevelPermission, MovieObjectLevelPermission, MovieModelLevelPermission
+from .permissions import UserModelLevelPermission, UserObjLevelPermission, ModelLevelPermission, ObjectLevelPermission
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.parsers import MultiPartParser
-
 
 
 
@@ -26,29 +25,25 @@ class MyTokenObtainPairView(TokenObtainPairView):
 class MovieViewSet(viewsets.ModelViewSet):
   queryset = Movie.objects.all()
   serializer_class = MovieSerializer
-  permission_classes = [MovieModelLevelPermission, MovieObjectLevelPermission,]
-
-  def perform_create(self, serializer):
-        # here you will send `created_by` in the `validated_data` 
-        serializer.save()
-
-  # def create(self, request):
-  #   serializer = MovieSerializer(data=request.data)
-  #   if serializer.is_valid():
-  #     serializer.save()
-  #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+  permission_classes = [ModelLevelPermission, ObjectLevelPermission,]
 
 
 class ActorViewSet(viewsets.ModelViewSet):
   queryset = Actor.objects.all()
   serializer_class = ActorSerializer
-  permission_classes = [IsAdminUser]
+  permission_classes = [ModelLevelPermission, ObjectLevelPermission,]
 
 
 class GenreViewSet(viewsets.ModelViewSet):
   queryset = Genre.objects.all()
   serializer_class = GenreSerializer
-  permission_classes = [IsAdminUser]
+  permission_classes = [ModelLevelPermission, ObjectLevelPermission,]
+
+
+class DirectorViewSet(viewsets.ModelViewSet):
+  queryset = Director.objects.all()
+  serializer_class = DirectorSerializer
+  permission_classes = [ModelLevelPermission, ObjectLevelPermission,]
 
 
 # CustomUser viewSet
@@ -178,6 +173,33 @@ class UpdateAvatar(GenericAPIView):
       self.object = self.get_object()
       user = CustomUser.objects.get(id=pk)
       serializer = UpdateAvatarSerializer(user, data=request.data)
+
+      if serializer.is_valid():
+          serializer.save()
+
+          return Response(data=serializer.data, status=status.HTTP_200_OK)
+      return Response(serializer.errors, status=400)
+   
+
+# Update movie poster
+class UpdatePoster(GenericAPIView):
+   """
+   An endpoint for changing avatar.
+   """
+   permission_classes = (IsAdminUser, )
+   parser_classes = (MultiPartParser, )
+   queryset = Movie.objects.all()
+
+
+   def get_object(self):
+    obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+    self.check_object_permissions(self.request, obj)
+    return obj
+   
+   def put(self, request, pk):
+      self.object = self.get_object()
+      user = Movie.objects.get(id=pk)
+      serializer = UpdatePosterSerializer(user, data=request.data)
 
       if serializer.is_valid():
           serializer.save()

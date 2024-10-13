@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Actor, Genre, Movie, CustomUser
+from .models import Actor, Genre, Movie, CustomUser, Director
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
@@ -18,10 +18,17 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     
 
 class ActorSerializer(serializers.ModelSerializer):
-  # movies = MovieSerializer(many=True)
-  class Meta:
+  
+  class Meta:    
     model = Actor
-    fields = ('firstname', 'lastname', )    
+    fields = ('name',)  
+
+
+class DirectorSerializer(serializers.ModelSerializer):
+  
+  class Meta:
+    model = Director
+    fields = ('name', )    
 
 
 
@@ -38,6 +45,9 @@ class MovieSerializer(serializers.ModelSerializer):
   actors_id = serializers.PrimaryKeyRelatedField(queryset=Actor.objects.all(), source='actors', many=True, write_only=True) # Include fields
   genre = GenreSerializer(read_only=True, many=True)
   genre_id = serializers.PrimaryKeyRelatedField(queryset=Genre.objects.all(), source='genre', many=True, write_only=True) # Include fields
+
+  director = DirectorSerializer(read_only=True, many=True)
+  director_id = serializers.PrimaryKeyRelatedField(queryset=Director.objects.all(), source='director', many=True, write_only=True) # Include fields
 
 # No need any more
   # def create(self, validated_data):
@@ -85,6 +95,7 @@ class MovieSerializer(serializers.ModelSerializer):
 'actors',
 'actors_id',
 'genre_id',
+'director_id',
 'poster',
 'country',
 'language',)
@@ -162,3 +173,12 @@ class UpdateAvatarSerializer(serializers.ModelSerializer):
   class Meta:
     model = CustomUser 
     fields = ['avatar', ]
+
+
+# Update movie poster
+class UpdatePosterSerializer(serializers.ModelSerializer):
+  poster = serializers.ImageField(required=False)
+
+  class Meta:
+    model = Movie 
+    fields = ['poster', ]

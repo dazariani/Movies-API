@@ -4,18 +4,17 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 
 function Navigation() {
-  let user = useContext(MovieContext)?.user;
-  let logoutUser = useContext(MovieContext)?.logoutUser;
+  let { user, logoutUser, setMovieList } = useContext(MovieContext);
 
   return (
     <Container>
       <Link to="/">Home</Link>
-      <Link to="/myMovies">My Movies</Link>
+      {user && <Link to="/myMovies">My Movies</Link>}
       <Link to="/about">About Us</Link>
       {!user ? (
         <Link to="/login">Sign In</Link>
       ) : (
-        <span onClick={logoutUser}>Log Out</span>
+        <Logout onClick={logoutUser}>Log Out</Logout>
       )}
     </Container>
   );
@@ -23,4 +22,16 @@ function Navigation() {
 
 export default Navigation;
 
-const Container = styled.div``;
+const Container = styled.div`
+  display: flex;
+  gap: 25px;
+  color: rgb(167, 186, 196);
+
+  & > a {
+    text-decoration: none;
+    color: unset;
+  }
+`;
+const Logout = styled.span`
+  cursor: pointer;
+`;
